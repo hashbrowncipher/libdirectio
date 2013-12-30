@@ -1,16 +1,12 @@
 #define _GNU_SOURCE
 #define __USE_GNU
 
+#include <dlfcn.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <string.h>
 #include <fcntl.h>
-#include <dlfcn.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-
-#define DEBUG
 
 #ifdef DEBUG
 #define DPRINTF(format, args...) fprintf(stderr, "debug: " format, ##args)
@@ -29,14 +25,14 @@ static int (*orig_open64)(const char *, int, ...) = NULL;
 static int __do_wrap_open(const char *name, int flags, mode_t mode,
 int (*func_open)(const char *, int, ...))
 {
-    if (strncmp("/dev/null", name, sizeof("/dev/null"))) {
-        DPRINTF("setting flags O_DIRECT on %s\n", name);
-        flags |= O_DIRECT;
+    int ret;
+
+    // certain filesystems don't support O_DIRECT, return EINVAL
+    ret = func_open(name, flags | O_DIRECT, mode);
+    if(ret == -1 && errno == EINVAL) {
+        ret = func_open(name, flags, mode);
     }
-    if (!strncmp("/dev/", name, sizeof("/dev/") - 1) ||
-            !strncmp("/proc/", name, sizeof("/proc/") - 1))
-        return fd;
-    return func_open(name, flags, mode);
+    return ret;
 }
 
 int wrap_open(const char *name, int flags, ...)

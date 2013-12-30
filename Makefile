@@ -3,8 +3,8 @@ VERSION=0.1
 TARGET=libdirectio.so.$(VERSION)
 OBJS=libdirectio.o
 CC=gcc
-CFLAGS= -fPIC -Wall -O2 -g
-SHAREDFLAGS= -nostartfiles -shared -W1,-soname,libdirectio.so.0
+CFLAGS= -fPIC -Wall -O3 -g
+SHAREDFLAGS= -nostartfiles -shared -Wl,-soname,libdirectio.so.0
 
 all: $(TARGET)
 
